@@ -1,0 +1,1 @@
+g++ main.cpp RedisServer.cpp RedisCommandHanlder.cpp -Iinclude -o redis_server.exe -lws2_32 -mconsole
