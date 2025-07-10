@@ -1,9 +1,9 @@
-#include "../include/RedisDatabase.h"
-
 #include<thread>
 #include<iostream>
 #include<fstream>
 #include<sstream>
+
+#include "../include/RedisDatabase.h"
 
 RedisDatabase& RedisDatabase :: getInstance()
 {
@@ -129,9 +129,133 @@ bool RedisDatabase::load(const std::string & filename)
 }
 
 RedisDatabase::RedisDatabase() {
-    // constructor body (even if empty)
+  
 }
 
 RedisDatabase::~RedisDatabase() {
-    // destructor body (even if empty)
+   
+}
+
+bool RedisDatabase :: flushAll()
+{
+    std::lock_guard<std::mutex> lock(db_mutex);
+    kv_store.clear();
+    list_store.clear();
+    hash_store.clear();
+    
+    return true;
+}
+
+// Key-Value Operations
+
+void RedisDatabase::set(const std::string& key , const std::string& val)
+{
+    std::lock_guard<std::mutex>lock(db_mutex);
+    kv_store[key] = val;
+}
+
+bool RedisDatabase :: get(const std::string& key ,  std::string& val)
+{
+    std::lock_guard<std::mutex> lock(db_mutex);
+    if(kv_store.find(key) == kv_store.end())return false;
+    val = kv_store[key];
+    return true;
+}
+
+std::vector<std::string> RedisDatabase :: keys()
+{
+    std::lock_guard<std::mutex> locK(db_mutex);
+    std::vector<std::string> res;
+    for(auto i : kv_store)
+    {
+        res.push_back(i.first);
+    }
+     for(auto i : list_store)
+    {
+        res.push_back(i.first);
+    }
+     for(auto i : hash_store)
+    {
+        res.push_back(i.first);
+    }
+
+    return res;
+    
+}
+
+std::string RedisDatabase :: type(const std::string& key)
+{
+    std::lock_guard<std::mutex> lock(db_mutex);
+    if(kv_store.find(key) != kv_store.end())
+    {
+        return  "String";
+    }
+    if(list_store.find(key) != list_store.end())
+    {
+        return  "List";
+    }
+    if(hash_store.find(key) != hash_store.end())
+    {
+        return  "Hash";
+    }
+    return "None";
+    
+}
+
+bool RedisDatabase :: del(const std::string& key)
+{
+     std::lock_guard<std::mutex> lock(db_mutex);
+     bool erased = false;
+     erased |= (kv_store.erase(key) > 0) ;
+     erased |= (list_store.erase(key) > 0) ;
+     erased |= (hash_store.erase(key) > 0) ;
+
+     return erased;
+
+}
+
+bool RedisDatabase ::  expire(const std::string& key , const std::string& seconds)
+{
+    std::lock_guard<std::mutex> lock(db_mutex);
+    bool exist = ( kv_store.find(key) != kv_store.end()) ||
+    ( list_store.find(key) != list_store.end()) || 
+    ( hash_store.find(key) != hash_store.end());
+
+    if(!exist) return false;
+    expiry_map[key] = std::chrono::steady_clock :: now() + std::chrono :: seconds(std::stoi(seconds));
+    return true;
+}
+
+bool RedisDatabase::rename(const std::string &oldkey, const std::string &newKey)
+{
+    std::lock_guard<std::mutex>lock(db_mutex);
+    bool found = false;
+    if(kv_store.find(oldkey) != kv_store.end())
+    {
+        found = true;
+        kv_store[newKey] = kv_store[oldkey];
+        kv_store.erase(oldkey);
+    }
+     if(list_store.find(oldkey) != list_store.end())
+    {
+        found = true;
+        list_store[newKey] = list_store[oldkey];
+        list_store.erase(oldkey);
+    }
+     if(hash_store.find(oldkey) != hash_store.end())
+    {
+        found = true;
+        hash_store[newKey] = hash_store[oldkey];
+        hash_store.erase(oldkey);
+    }
+     if(expiry_map.find(oldkey) != expiry_map.end())
+    {
+        found = true;
+        expiry_map[newKey] = expiry_map[oldkey];
+        expiry_map.erase(oldkey);
+
+    }
+
+    return found;
+
 }

@@ -15,7 +15,14 @@ int main(int argc , char* argv[])
         std::cerr << "Invalid port. Using default port 6379.\n";
     }
 
-
+    if(RedisDatabase::getInstance().load("dump.my_rdb"))
+    {
+        std::cout << "Database Loaded From File\n";
+    }
+    else
+    {
+        std::cout << "No Data Dump Found or Load Failed , Starting with an empty Database.\n";
+    }
 
     RedisServer server(port); // create server Instance
 

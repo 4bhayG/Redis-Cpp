@@ -119,7 +119,7 @@ std::string RedisCommandHanlder::proccessCommand(const std::string& commandLine)
             response << "-Error ECHO Reqiuires a Message\r\n";
         }
         else
-            return response << "+" << tokens[1] << "\r\n";
+             response << "+" << tokens[1] << "\r\n";
     }
     else if( cmd == "FLUSHALL" )
     {
@@ -128,19 +128,19 @@ std::string RedisCommandHanlder::proccessCommand(const std::string& commandLine)
     }
     else if( cmd == "SET" )
     {
-        if(token.size() < 3 )
+        if(tokens.size() < 3 )
         {
             response << "-Error : SET Reqiuires Key and Value\r\n ";
         }
         else
         {
             Db_Instance.set(tokens[1] , tokens[2]);
-            response << "+Ok\r\n";
+            response << "+OK\r\n";
         }
     }
     else if(cmd == "GET")
     {
-        if(token.size() < 2 )
+        if(tokens.size() < 2 )
         {
             response << "-Error : GET Reqiuires Key\r\n ";
         }
@@ -165,12 +165,12 @@ std::string RedisCommandHanlder::proccessCommand(const std::string& commandLine)
         response << "*" << allkeys.size() << "\r\n";
         for(auto& i : allkeys)
         {
-            response << "$" << i.length() << "\r\n" << key << "\r\n";
+            response << "$" << i.length() << "\r\n" << i << "\r\n";
         }
     }
     else if( cmd == "TYPE" )
     {
-         if(token.size() < 2 )
+         if(tokens.size() < 2 )
         {
             response << "-Error : TYPE Reqiuires Key\r\n ";
         }
@@ -188,7 +188,7 @@ std::string RedisCommandHanlder::proccessCommand(const std::string& commandLine)
         else
         {
             bool res = Db_Instance.del(tokens[1]);
-            response << ":"  << (res ? 1 : 0) < "\r\n";
+            response << ":"  << (res ? 1 : 0) << "\r\n";
         }
     }
     else if( cmd == "EXPIRE")
@@ -198,13 +198,11 @@ std::string RedisCommandHanlder::proccessCommand(const std::string& commandLine)
             response << "-Error : EXPIRE Requires Key and time\r\n";
         }
         else
-        {   if( Db_Instance.expire(tokens[1] , tokens[2]);)
+        {   if( Db_Instance.expire(tokens[1] , tokens[2]))
             {
                 response << "+OK\r\n";
             }
-            else
 
-            
         }
     }
     else if(cmd == "RENAME")
@@ -214,10 +212,9 @@ std::string RedisCommandHanlder::proccessCommand(const std::string& commandLine)
             response << "-Error : RENAME Requires Old and New Key\r\n";
         }
         else
-        {  if( Db_Instance.rename(tokens[1] , tokens[2]);)
+        {  if( Db_Instance.rename(tokens[1] , tokens[2]))
                 response << "+OK\r\n";
-            else
-                
+
         }  
     }
     else
