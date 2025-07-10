@@ -1,17 +1,42 @@
 #include <iostream>
 #include "../include/RedisServer.h"
 #include "../include/RedisCommandHanlder.h"
+#include "../include/RedisDatabase.h"
 #include<vector>
 #include<thread>
 #include<cstring>
 #include <winsock2.h>   // Core Winsock functions
 #include <ws2tcpip.h>   // IP address manipulation 
+#include<signal.h>
 
 #pragma comment(lib, "ws2_32.lib") // Ensure linking Winsock library
 static RedisServer* globalServer = nullptr; // creating a global db server instance
 
+
+
+void signalHanlder(int signum)
+{
+    if(globalServer)
+    {
+        std::cout << "Caught Signal " <<signum << " , shutting down...\n";
+        globalServer -> shutdown();
+    }
+
+    exit(signum);
+
+}
+
+void RedisServer :: setupSignalHandler()
+{
+    signal(SIGINT , signalHanlder);
+}
+
+
+
+
 RedisServer :: RedisServer(int port) : port(port) , server_socket(INVALID_SOCKET) , running(true){
     globalServer = this;
+    setupSignalHandler();
 }
 
 void RedisServer:: shutdown()
@@ -115,6 +140,15 @@ void RedisServer:: run()
     }
 
     // persistence Checking
+
+    if(RedisDatabase::getInstance().dump("dump.my_rdb"))
+    {
+        std::cout << "Database dumped to dump.my_rdb";
+    }
+    else
+    {
+        std::cerr <<  "Error Dumping Database"; 
+    }
 
     // Shutdown
 

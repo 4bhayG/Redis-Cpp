@@ -1,5 +1,7 @@
 #include "../include/RedisCommandHanlder.h"
 
+#include "../include/RedisDatabase.h"
+
 #include<vector>
 #include<string>
 #include<iostream>
@@ -15,14 +17,14 @@ std:: vector<std::string> parseRespCommand(const std::string& input)
     if(input.empty())return tokens; 
 
 
-    std::cout<< "\n Input Revieved : \n";
-    std::cout<<input<<"\n";
+    // std::cout<< "\n Input Revieved : \n";
+    // std::cout<<input<<"\n";
 
-    // Printing - Debugging
-    for(auto& t : tokens )
-    {
-        std::cout<<t << "\n";
-    }
+    // // Printing - Debugging
+    // for(auto& t : tokens )
+    // {
+    //     std::cout<<t << "\n";
+    // }
 
     // if not starting via * -> fallback splitting via whitespaces
     if(input[0] != '*')
@@ -69,7 +71,15 @@ std:: vector<std::string> parseRespCommand(const std::string& input)
         pos += len + 2 ; // skip token and crlf
 
     }
+    
 
+    // // Debugging
+    // std::cout<<"Parsed Message: \n";
+    // for(auto& t : tokens)
+    // {
+    //     std::cout<<t<<" ";
+    // }
+    // std::cout<<"\n";
     return tokens;
    
 }
@@ -92,10 +102,128 @@ std::string RedisCommandHanlder::proccessCommand(const std::string& commandLine)
     std:: ostringstream response;
 
     // Connect to Db
+
+    RedisDatabase& Db_Instance = RedisDatabase :: getInstance();
     
     // TODO
     
     // Check Commands
+    if(cmd == "PING")
+    {
+        response << "+PONG\r\n";
+    }
+    else if(cmd == "ECHO")
+    {
+        if(tokens.size() < 2)
+        {
+            response << "-Error ECHO Reqiuires a Message\r\n";
+        }
+        else
+            return response << "+" << tokens[1] << "\r\n";
+    }
+    else if( cmd == "FLUSHALL" )
+    {
+        Db_Instance.flushAll();
+        response << "+OK\r\n";
+    }
+    else if( cmd == "SET" )
+    {
+        if(token.size() < 3 )
+        {
+            response << "-Error : SET Reqiuires Key and Value\r\n ";
+        }
+        else
+        {
+            Db_Instance.set(tokens[1] , tokens[2]);
+            response << "+Ok\r\n";
+        }
+    }
+    else if(cmd == "GET")
+    {
+        if(token.size() < 2 )
+        {
+            response << "-Error : GET Reqiuires Key\r\n ";
+        }
+        else
+        {
+            std::string value;
+            if(Db_Instance.get(tokens[1] , value))
+            {
+                response  << "$" << value.size() << "\r\n" << value << "\r\n";
+            }
+            else
+            {
+                response << "$-1\r\n";
+            }
+            
+        }
+    }
+    else if(cmd == "KEYS")
+    {
+        std::vector<std::string> allkeys;
+        allkeys = Db_Instance.keys();
+        response << "*" << allkeys.size() << "\r\n";
+        for(auto& i : allkeys)
+        {
+            response << "$" << i.length() << "\r\n" << key << "\r\n";
+        }
+    }
+    else if( cmd == "TYPE" )
+    {
+         if(token.size() < 2 )
+        {
+            response << "-Error : TYPE Reqiuires Key\r\n ";
+        }
+        else
+        {
+            response << "+" << Db_Instance.type(tokens[1]) << "\r\n";
+        }
+    }
+    else if( cmd  == "DEL" || cmd == "UNLINK")
+    {
+        if(tokens.size() < 2)
+        {
+            response << "-Error : DEL Requires Key\r\n"; 
+        }
+        else
+        {
+            bool res = Db_Instance.del(tokens[1]);
+            response << ":"  << (res ? 1 : 0) < "\r\n";
+        }
+    }
+    else if( cmd == "EXPIRE")
+    {
+        if(tokens.size() < 3)
+        {
+            response << "-Error : EXPIRE Requires Key and time\r\n";
+        }
+        else
+        {   if( Db_Instance.expire(tokens[1] , tokens[2]);)
+            {
+                response << "+OK\r\n";
+            }
+            else
+
+            
+        }
+    }
+    else if(cmd == "RENAME")
+    {
+        if( tokens.size() < 3)
+        {
+            response << "-Error : RENAME Requires Old and New Key\r\n";
+        }
+        else
+        {  if( Db_Instance.rename(tokens[1] , tokens[2]);)
+                response << "+OK\r\n";
+            else
+                
+        }  
+    }
+    else
+    {
+        response << "- Error -Wrong Command\r\n";
+    }
 
 
     return response.str(); // Returns any generic Pattern

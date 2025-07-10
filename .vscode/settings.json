@@ -58,6 +58,11 @@
         "span": "cpp",
         "stop_token": "cpp",
         "text_encoding": "cpp",
-        "variant": "cpp"
-    }
+        "variant": "cpp",
+        "cstring": "cpp",
+        "condition_variable": "cpp",
+        "map": "cpp",
+        "mutex": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }
