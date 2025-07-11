@@ -259,3 +259,7 @@ bool RedisDatabase::rename(const std::string &oldkey, const std::string &newKey)
     return found;
 
 }
+
+
+// LIST Opreations
+

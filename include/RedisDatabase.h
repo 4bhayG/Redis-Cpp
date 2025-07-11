@@ -2,6 +2,7 @@
 #define REDIS_DATABASE_H
 
 #include<string>
+#include<queue>
 #include<mutex>
 #include <unordered_map>
 #include<vector>
@@ -32,10 +33,25 @@ class RedisDatabase
      // rename
      bool rename(const std::string& oldkey , const std::string& newKey);
 
+     // LIST Operations
+    
+     bool llen(const std::string& key);
+     void lpush(const std::string& key , std::string value);
+     void rpush(const std::string& key , std::string& value);
+     bool lpop(const std::string& key , std::string& val);
+     bool rpop(const std::string& key , std::string& val);
+     int lrem(const std::string&key , std::String& val , int count);
+     bool lindex(const std::string& key , int index , const std::string& val);
+     bool lset(const std::string& key , int index , std::string& value);
+
+
+
+
+
     
 
 
-    private:
+    private: 
 
     RedisDatabase();
     ~RedisDatabase();
@@ -44,9 +60,9 @@ class RedisDatabase
 
     std::mutex db_mutex;
     std::unordered_map<std::string , std::string > kv_store;
-    std:: unordered_map<std::string , std::vector<std::string> > list_store;
     std:: unordered_map<std::string , std::unordered_map<std::string , std::string > > hash_store;
     std::unordered_map<std::string , std::chrono::steady_clock::time_point > expiry_map;
+    std::unordered_map<std::string , std::deque<std::string> > list_store;
 };
 
 #endif
