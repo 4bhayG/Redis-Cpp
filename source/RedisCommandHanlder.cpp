@@ -94,7 +94,7 @@ static std::string HandleLen(const std::vector<std::string>& tokens , RedisDatab
         return "-Error : LLEN Requires Key\r\n";
     }
     size_t len = db.llen(tokens[1]);
-    return ":" << std::to_string(len) << "\r\n" ;
+    return ":" + std::to_string(len)  +  "\r\n" ;
 }
 
 
@@ -104,10 +104,14 @@ static std::string handleLpush(const std::vector<std::string>& tokens , RedisDat
         return "-Error : LPUSH Requires Value\r\n";
     }
     else
-    {
-        db.lpush(tokens[1] , tokens[2]);
+    {   std::vector<std::string> values;
+        for(int index = 2 ; index < tokens.size() ; index++)
+        {
+            values.push_back(tokens[index]);
+        }
+        db.lpush(tokens[1] , values);
         size_t len = db.llen(tokens[1]);
-        return ":" << std::to_string(len) << "\r\n" ;
+        return ":"  +  std::to_string(len)  +  "\r\n" ;
     }
 }
 
@@ -117,10 +121,14 @@ static std::string handleRpush(const std::vector<std::string>& tokens , RedisDat
         return "-Error : RPUSH Requires Key and Value\r\n";
     }
     else
-    {
-        db.rpush(tokens[1] , tokens[2]);
+    {   std::vector<std::string> values;
+        for(int index = 2 ; index < tokens.size() ; index++)
+        {
+            values.push_back(tokens[index]);
+        }
+        db.rpush(tokens[1] , values);
         size_t len = db.llen(tokens[1]);
-        return ":" << std::to_string(len) << "\r\n" ;
+        return ":"  +  std::to_string(len) +  "\r\n" ;
     }
     
 }
@@ -135,7 +143,7 @@ static std::string handleLpop(const std::vector<std::string>& tokens , RedisData
         std::string value ;
         if(db.lpop(tokens[1] , value))
         {
-            return "$" + std::to_string(val.size()) + "\r\n" + val + "\r\n";
+            return "$" + std::to_string(value.size()) + "\r\n" + value + "\r\n";
         }
         else
         {
@@ -154,7 +162,7 @@ static std::string handleRpop(const std::vector<std::string>& tokens , RedisData
         std::string value ;
         if(db.rpop(tokens[1] , value))
         {
-            return "$" + std::to_string(val.size()) + "\r\n" + val + "\r\n";
+            return "$" + std::to_string(value.size()) + "\r\n" + value + "\r\n";
         }
         else
         {
@@ -174,7 +182,7 @@ static std::string handleLrem(const std::vector<std::string>& tokens , RedisData
         {
              
         int cnt = std::stoi(tokens[2]);
-        int removed = db.lrem(tokens[1] , cnt , tokens[3]);
+        int removed = db.lrem(tokens[1] , tokens[3] ,  cnt  );
         return ":" + std:: to_string(removed) + "\r\n";
 
         }
@@ -198,8 +206,8 @@ static std::string handleLindex(const std::vector<std::string>& tokens , RedisDa
             std::string Value;
             if(db.lindex(tokens[1] , index , Value))
             {
-                return "$" << std::to_string(Value.size()) + 
-                "\r\n" + Value + "\r\n";
+                return "$" +  std::to_string(Value.size()) + "\r\n" + Value + "\r\n";
+                
             }
             else
             {
@@ -238,6 +246,118 @@ static std::string handleLset(const std::vector<std::string>& tokens , RedisData
     }
     
 }
+
+
+// Hash Operations
+
+static std::string handleHset(const std::vector<std::string>& tokens , RedisDatabase& db )
+{
+    if(tokens.size() < 4 )
+    {
+        return "-Error : HSET Requires key , field , value\r\n";
+    }
+
+    bool possible = db.hset(tokens[1] , tokens[2] , tokens[3]);
+
+    return "+1\r\n";
+}
+
+
+static std::string handleHget(std::vector<std::string>& tokens , RedisDatabase&db)
+{
+    if(tokens.size() != 3)
+    {
+        return "-Error : HGET Requires Key and Field.\r\n";
+    }
+
+    std::string value;
+    bool valGet = db.hget(tokens[1] , tokens[2] , value);
+    if(!valGet)
+    {
+        return "$-1\r\n";
+    }
+
+    return "$" + std::to_string(value.size()) + "\r\n" + value + "\r\n";
+}
+
+
+static std::string HanldeHexist(std::vector<std::string>& tokens , RedisDatabase& db)
+{
+     if(tokens.size() < 3 )
+    {
+        return "-Error : HEXIST Requires key and field.\r\n";
+    }
+
+    bool exists = db.hexist(tokens[1] , tokens[2]);
+
+    return ":" << std::to_string(exists ? 1 : 0 ) + "\r\n";
+
+} 
+
+static std::string HandleHdel(std:vector<std::string>& tokens , RedisDatbase& db)
+{
+    if(tokens.size() < 3 )
+    {
+        return "-Error : HDEL Requires key and field.\r\n";
+    }
+    bool deleted = db.hdel(tokens[1] , tokens[2]);
+    return ":" << std::to_string(deleted ? 1 : 0 ) + "\r\n";
+}
+
+static std::string HandleHgetAll(std::vector<std::string>& tokens , RedisDatabase& db)
+{
+
+    if(tokens.size() < 2 )
+    {
+        return "-Error : HGETALL Requires key.\r\n";
+    }
+    std::unorderd_map<std::string , std::string> vals = db.
+
+}
+static std::string HandleHkeys(std::vector<std::string>& tokens ,  RedisDatabase& db)
+{
+     
+    if(tokens.size() < 2 )
+    {
+        return "-Error : HKEYS Requires key.\r\n";
+    }
+}
+
+static std::string HandleHVals(std::vector<std::string>& tokens , RedisDatabase& db)
+{
+    if(tokens.size() < 2 )
+    {
+        return "-Error : HVALS Requires key.\r\n";
+    }
+}
+
+static std::string HandleHmSet(std::vector<std::string>& tokens , RedisDatabase& db)
+{
+    if(tokens.size() < 4 || (tokens.size() % 2 == 1) )
+    {
+        return "-Error : HMSET Requires key followd by field and Value as a pair.\r\n";
+    }
+
+}
+
+static std::string HandleHlen(std::vector<std::string>& tokens , RedisDatabase& db)
+{
+  if( tokens.size() < 2 ) 
+  {
+    return "-Error : HLEN Requires Key\r\n";
+  }
+
+}
+
+
+
+
+
+
+
+
+
+
 
 
 RedisCommandHanlder :: RedisCommandHanlder(){};
@@ -405,6 +525,29 @@ std::string RedisCommandHanlder::proccessCommand(const std::string& commandLine)
     {
         return handleLset(tokens , Db_Instance);
     }
+    // Hash Operation Commands
+    else if(cmd == "HSET")
+    {
+        return HandleHset(tokens , Db_Instance);
+    }
+    else if( cmd = "HGET" )
+    {
+        return handleHget(tokens , Db_Instance);
+    }
+    else if(cmd == "HEXISTS")
+    {
+        return HanldeHexist(tokens , Db_Instance);
+    }
+    else if(cmd == "HDEL")
+    {
+        return HandleHdel(tokens , Db_Instance);
+    }
+    else if(cmd == "HGETALL")
+    {
+        return HandleHgetAll(tokens , Db_Instance);
+    }
+    else if( cmd == "HKEYS") return HandleHkeys(tokens , Db_Instance);
+    else if(cmd == "HYVALS") return HandleHVals(tokens , Db_Instance);
     else
     {
         response << "- Error -Wrong Command\r\n";

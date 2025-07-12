@@ -8,6 +8,7 @@
 #include "../include/RedisDatabase.h"
 #include "RedisDatabase.h"
 
+
 RedisDatabase& RedisDatabase :: getInstance()
 {
      static RedisDatabase instance ;
@@ -277,17 +278,21 @@ size_t RedisDatabase::llen(const std::string &key)
     return list_store[key].size();
 }
 
-void RedisDatabase::lpush(const std::string &key, std::string value)
+void RedisDatabase::lpush(const std::string &key, std::vector<std::string>& values)
 {
      std::lock_guard<std::mutex> lock(db_mutex);
-     list_store[key].insert(lsit_store[key].begin() , list_store.end() , value);
+     for(auto value : values)list_store[key].insert(list_store[key].begin() , value);
+
+     return ;
 
 }
 
-void RedisDatabase::rpush(const std::string &key, std::string &value)
+void RedisDatabase::rpush(const std::string &key, std::vector<std::string>& values)
 {
      std::lock_guard<std::mutex> lock(db_mutex);
-     list_store[key].push_back(value);
+     for(auto j : values)list_store[key].push_back(j);
+
+     return ;
 }
 
 bool RedisDatabase::lpop(const std::string &key, std::string &val)
@@ -295,6 +300,7 @@ bool RedisDatabase::lpop(const std::string &key, std::string &val)
      std::lock_guard<std::mutex> lock(db_mutex);
     if(list_store.find(key) == list_store.end())
     return false;
+    if(list_store[key].size() == 0) return false;
     val = list_store[key].front();
     list_store[key].erase(list_store[key].begin());
 
@@ -304,13 +310,14 @@ bool RedisDatabase::lpop(const std::string &key, std::string &val)
 bool RedisDatabase::rpop(const std::string &key, std::string &val)
 {
     std::lock_guard<std::mutex> lock(db_mutex);
-    if(list_store.find(key) == lists_store.end()) return false;
+    if(list_store.find(key) == list_store.end()) return false;
+    if(list_store[key].size() == 0 ) return false;
     val = list_store[key][list_store[key].size() - 1];
     list_store[key].pop_back();
     return true;
 }
 
-int RedisDatabase::lrem(const std::string &key, std::String &val, int count)
+int RedisDatabase::lrem(const std::string &key,const std::string &value , int count)
 {
      std::lock_guard<std::mutex> lock(db_mutex);
      int removed = 0 ;
@@ -353,7 +360,7 @@ int RedisDatabase::lrem(const std::string &key, std::String &val, int count)
 }
 
 
-bool RedisDatabase::lindex(const std::string &key, int index, const std::string &value)
+bool RedisDatabase::lindex(const std::string &key, int index, std::string &value)
 {
      std::lock_guard<std::mutex> lock(db_mutex);
      auto it = list_store.find(key);
@@ -371,7 +378,7 @@ bool RedisDatabase::lindex(const std::string &key, int index, const std::string 
      
 }
 
-bool RedisDatabase::lset(const std::string &key, int index, std::string &value)
+bool RedisDatabase::lset(const std::string &key, int index, std::string value)
 {
     std::lock_guard<std::mutex> lock(db_mutex);
     auto it = list_store.find(key);
@@ -390,5 +397,55 @@ bool RedisDatabase::lset(const std::string &key, int index, std::string &value)
 
 
 // Hash Operations
+
+bool RedisDatabase::hset(const std::string &key, const std::string &field, const std::string &value)
+{
+   bool isNewField = hash_store[key].find(field) == hash_store[key].end();
+    hash_store[key][field] = value;
+    return isNewField;
+}
+
+bool RedisDatabase::hget(const std::string &key, const std::string &field, std::string &value)
+{
+    if(hash_store.find(key) == hash_store.end()) return false;
+    if(hash_store[key].find(field) == hash_store[key].end()) return false;
+
+    value = hash_store[key][field];
+    return true;
+}
+
+bool RedisDatabase::hexist(const std::string &key, const std::string &field)
+{
+    if(hash_store.find(key) == hash_store.end()) return  false;
+    if(hash_store[key].find(field) == hash_store[key].end()) return false;
+    return true;
+}
+
+bool RedisDatabase::hdel(const std::string &key, const std::string &field)
+{
+    
+}
+
+std::vector<std::string> RedisDatabase::hkeys(const std::string &key)
+{
+    return std::vector<std::string>();
+}
+
+int RedisDatabase::hlen(std::string &key)
+{
+    return 0;
+}
+
+std::vector<std::string> RedisDatabase::hvals(const std::string &keys)
+{
+    return std::vector<std::string>();
+}
+
+bool RedisDatabase::Hmset(std::string &key, std::vector<std::pair<std::string, std::string>> &vals)
+{
+    return false;
+}
+
+
 
 

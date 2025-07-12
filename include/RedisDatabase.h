@@ -35,20 +35,26 @@ class RedisDatabase
 
      // LIST Operations
     
-     bool llen(const std::string& key);
-     void lpush(const std::string& key , std::string value);
-     void rpush(const std::string& key , std::string& value);
+     size_t llen(const std::string& key);
+     void lpush(const std::string& key , std::vector<std::string>& values);
+     void rpush(const std::string& key , std::vector<std::string>& values);
      bool lpop(const std::string& key , std::string& val);
      bool rpop(const std::string& key , std::string& val);
-     int lrem(const std::string&key , std::String& val , int count);
-     bool lindex(const std::string& key , int index , const std::string& val);
-     bool lset(const std::string& key , int index , std::string& value);
+     int lrem(const std::string&key , const std::string& val , int count);
+     bool lindex(const std::string& key , int index ,std::string& val);
+     bool lset(const std::string& key , int index , std::string value);
 
+    // Hash Operations
+    bool hset(const std::string& key , const std::string& field , const std::string& value);
+    bool hget(const std::string& key , const std::string& field , std::string& value);
+    bool hexist(const std::string& key , const std::string& field);
+    bool hdel(const std::string& key , const std::string& field );
+    std::unordered_map<std::string , std::string> hgetAll(const std::string& key);
+    std::vector<std::string> hkeys(const std:: string& key);
+    int hlen(std::string& key);
+    std::vector<std::string> hvals(const std::string& keys);
+    bool Hmset(std::string& key , std::vector<std::pair<std::string , std::string> >&  vals);
 
-
-
-
-    
 
 
     private: 
@@ -61,8 +67,9 @@ class RedisDatabase
     std::mutex db_mutex;
     std::unordered_map<std::string , std::string > kv_store;
     std:: unordered_map<std::string , std::unordered_map<std::string , std::string > > hash_store;
+    std::unordered_map< std::string , std::vector<std::string> > list_store;
     std::unordered_map<std::string , std::chrono::steady_clock::time_point > expiry_map;
-    std::unordered_map<std::string , std::deque<std::string> > list_store;
+    std::unordered_map<std::string , std::deque<std::string> > queue_store;
 };
 
 #endif
