@@ -3,6 +3,7 @@
 #include "../include/RedisDatabase.h"
 
 #include<vector>
+#include<unordered_map>
 #include<string>
 #include<iostream>
 #include<sstream>
@@ -300,8 +301,8 @@ static std::string HandleHdel(std:vector<std::string>& tokens , RedisDatbase& db
     {
         return "-Error : HDEL Requires key and field.\r\n";
     }
-    bool deleted = db.hdel(tokens[1] , tokens[2]);
-    return ":" << std::to_string(deleted ? 1 : 0 ) + "\r\n";
+        bool h = db.hdel(tokens[1] , tokens[2]);
+    return ":" << std::to_string(h ? 1 : 0 ) + "\r\n";
 }
 
 static std::string HandleHgetAll(std::vector<std::string>& tokens , RedisDatabase& db)
@@ -311,7 +312,17 @@ static std::string HandleHgetAll(std::vector<std::string>& tokens , RedisDatabas
     {
         return "-Error : HGETALL Requires key.\r\n";
     }
-    std::unorderd_map<std::string , std::string> vals = db.
+    
+    std::unordered_map<std::string , std::string> results = db.hgetAll(tokens[1]);
+  std::ostringstream oss;
+  oss << "*" << results.size()*2 << "\r\n";
+  for(const auto& pair : hash)
+  {
+    oss << "$" << pair.first.size() << "\r\n" << pair.first << "\r\n";
+    oss << "$" << pair.second.size() << "\r\n" << pair.second << "\r\n";
+
+  }
+   return oss.str();
 
 }
 static std::string HandleHkeys(std::vector<std::string>& tokens ,  RedisDatabase& db)
@@ -321,6 +332,15 @@ static std::string HandleHkeys(std::vector<std::string>& tokens ,  RedisDatabase
     {
         return "-Error : HKEYS Requires key.\r\n";
     }
+    std::vector<std::string> keys = db.hkeys(tokens[1]);
+    std::ostringstream oss;
+    oss << "*" << keys.size() << "\r\n";
+    for(auto i : keys)
+    {
+        oss << "$" << i.length() << "\r\n" << i << "\r\n";
+    }
+
+    return oss.str();
 }
 
 static std::string HandleHVals(std::vector<std::string>& tokens , RedisDatabase& db)
@@ -329,6 +349,15 @@ static std::string HandleHVals(std::vector<std::string>& tokens , RedisDatabase&
     {
         return "-Error : HVALS Requires key.\r\n";
     }
+     std::vector<std::string> vals = db.hvals(tokens[1]);
+    std::ostringstream oss;
+    oss << "*" << vals.size() << "\r\n";
+    for(auto i : vals)
+    {
+        oss << "$" << i.length() << "\r\n" << i << "\r\n";
+    }
+
+    return oss.str();
 }
 
 static std::string HandleHmSet(std::vector<std::string>& tokens , RedisDatabase& db)
@@ -337,6 +366,14 @@ static std::string HandleHmSet(std::vector<std::string>& tokens , RedisDatabase&
     {
         return "-Error : HMSET Requires key followd by field and Value as a pair.\r\n";
     }
+
+    std::vector<std::pair<std::string , std::string > > fieldVals;
+    for(size_t i = 2 ; i < tokens.size() ; i +=2 )
+    {
+        fieldVals.emplace_back({tokens[i] , tokens[i + 1]});
+    }
+
+    return "+OK\r\n";
 
 }
 
@@ -347,18 +384,11 @@ static std::string HandleHlen(std::vector<std::string>& tokens , RedisDatabase& 
     return "-Error : HLEN Requires Key\r\n";
   }
 
+  int sizeLen  = db.hlen(tokens[1]);
+
+  return ":" + std::to_string(sizeLen) << "\r\n";
+  
 }
-
-
-
-
-
-
-
-
-
-
-
 
 RedisCommandHanlder :: RedisCommandHanlder(){};
 

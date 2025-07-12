@@ -423,7 +423,12 @@ bool RedisDatabase::hexist(const std::string &key, const std::string &field)
 
 bool RedisDatabase::hdel(const std::string &key, const std::string &field)
 {
-    
+    return false;
+}
+
+std::unordered_map<std::string, std::string> RedisDatabase::hgetAll(const std::string &key)
+{
+    return std::unordered_map<std::string, std::string>();
 }
 
 std::vector<std::string> RedisDatabase::hkeys(const std::string &key)
