@@ -30,6 +30,7 @@ class RedisDatabase
      bool del(const std::string& key);
      // expire
      bool expire(const std::string& key , const std::string&  seconds);
+     void purgeExpire();
      // rename
      bool rename(const std::string& oldkey , const std::string& newKey);
 
@@ -43,6 +44,7 @@ class RedisDatabase
      int lrem(const std::string&key , const std::string& val , int count);
      bool lindex(const std::string& key , int index ,std::string& val);
      bool lset(const std::string& key , int index , std::string value);
+     std::vector<std::string> lget(const std::string& key);
 
     // Hash Operations
     bool hset(const std::string& key , const std::string& field , const std::string& value);

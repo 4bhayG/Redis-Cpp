@@ -291,18 +291,18 @@ static std::string HanldeHexist(std::vector<std::string>& tokens , RedisDatabase
 
     bool exists = db.hexist(tokens[1] , tokens[2]);
 
-    return ":" << std::to_string(exists ? 1 : 0 ) + "\r\n";
+    return ":" + std::to_string(exists ? 1 : 0 ) + "\r\n";
 
 } 
 
-static std::string HandleHdel(std:vector<std::string>& tokens , RedisDatbase& db)
+static std::string HandleHdel(std::vector<std::string>& tokens , RedisDatabase& db)
 {
     if(tokens.size() < 3 )
     {
         return "-Error : HDEL Requires key and field.\r\n";
     }
         bool h = db.hdel(tokens[1] , tokens[2]);
-    return ":" << std::to_string(h ? 1 : 0 ) + "\r\n";
+    return ":" + std::to_string(h ? 1 : 0 ) + "\r\n";
 }
 
 static std::string HandleHgetAll(std::vector<std::string>& tokens , RedisDatabase& db)
@@ -316,11 +316,10 @@ static std::string HandleHgetAll(std::vector<std::string>& tokens , RedisDatabas
     std::unordered_map<std::string , std::string> results = db.hgetAll(tokens[1]);
   std::ostringstream oss;
   oss << "*" << results.size()*2 << "\r\n";
-  for(const auto& pair : hash)
+  for(const auto& p : results)
   {
-    oss << "$" << pair.first.size() << "\r\n" << pair.first << "\r\n";
-    oss << "$" << pair.second.size() << "\r\n" << pair.second << "\r\n";
-
+    oss << "$" << p.first.size() << "\r\n" << p.first << "\r\n";
+    oss << "$" << p.second.size() << "\r\n" << p.second << "\r\n";
   }
    return oss.str();
 
@@ -370,7 +369,7 @@ static std::string HandleHmSet(std::vector<std::string>& tokens , RedisDatabase&
     std::vector<std::pair<std::string , std::string > > fieldVals;
     for(size_t i = 2 ; i < tokens.size() ; i +=2 )
     {
-        fieldVals.emplace_back({tokens[i] , tokens[i + 1]});
+        fieldVals.push_back({tokens[i] , tokens[i + 1]});
     }
 
     return "+OK\r\n";
@@ -386,8 +385,26 @@ static std::string HandleHlen(std::vector<std::string>& tokens , RedisDatabase& 
 
   int sizeLen  = db.hlen(tokens[1]);
 
-  return ":" + std::to_string(sizeLen) << "\r\n";
+  return ":" + std::to_string(sizeLen) +  "\r\n";
   
+}
+
+static std::string handleLGET(std::vector<std::string>&tokens , RedisDatabase& db)
+{
+    if(tokens.size() < 2 )
+    {
+        return "-Error : LGET Requires Key\r\n";
+    }
+    std::vector<std::string>  elems = db.lget(tokens[1]);
+    std::ostringstream oss;
+    if(elems.size() == 0) return "-Error : Invalid Key List Doesn't Exist\r\n";
+    oss << "*" << elems.size() << "\r\n";
+    for(std::string elem : elems )
+    {
+        oss << "$" << std::to_string(elem.length()) << "\r\n" << elem << "\r\n";
+    }
+
+    return oss.str();
 }
 
 RedisCommandHanlder :: RedisCommandHanlder(){};
@@ -555,12 +572,20 @@ std::string RedisCommandHanlder::proccessCommand(const std::string& commandLine)
     {
         return handleLset(tokens , Db_Instance);
     }
+    else if( cmd == "LGET")
+    {
+        return handleLGET(tokens , Db_Instance);
+    }
+
+
+
+
     // Hash Operation Commands
     else if(cmd == "HSET")
     {
-        return HandleHset(tokens , Db_Instance);
+        return handleHset(tokens , Db_Instance);
     }
-    else if( cmd = "HGET" )
+    else if( cmd == "HGET" )
     {
         return handleHget(tokens , Db_Instance);
     }
@@ -577,7 +602,8 @@ std::string RedisCommandHanlder::proccessCommand(const std::string& commandLine)
         return HandleHgetAll(tokens , Db_Instance);
     }
     else if( cmd == "HKEYS") return HandleHkeys(tokens , Db_Instance);
-    else if(cmd == "HYVALS") return HandleHVals(tokens , Db_Instance);
+    else if(cmd == "HVALS") return HandleHVals(tokens , Db_Instance);
+    else if( cmd == "HLEN") return HandleHlen(tokens , Db_Instance);
     else
     {
         response << "- Error -Wrong Command\r\n";
